@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Aluminium CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0e1a;font-family:'Inter',system-ui,sans-serif;color:#e2e8f0;overflow:hidden;height:100vh;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#0f1420;}
+::-webkit-scrollbar-thumb{background:#2a3347;border-radius:3px;}
+select,input,textarea{outline:none;}
+button{outline:none;cursor:pointer;}
+
+/* Layout */
+#app{display:flex;height:100vh;}
+#sidebar{width:218px;min-width:218px;background:#0f1420;border-right:1px solid #2a3347;display:flex;flex-direction:column;overflow:hidden;transition:all 0.2s;}
+#sidebar.closed{width:0;min-width:0;}
+#sidebar-header{padding:18px 14px 12px;border-bottom:1px solid #2a3347;}
+#logo{display:flex;align-items:center;gap:9px;}
+#logo-icon{width:30px;height:30px;background:#3b82f6;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;}
+#logo-text{color:#e2e8f0;font-weight:700;font-size:13px;line-height:1.2;}
+#logo-sub{color:#94a3b8;font-size:10px;}
+#nav{flex:1;overflow-y:auto;padding:10px 7px;}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;border-radius:7px;border:none;cursor:pointer;margin-bottom:1px;background:transparent;color:#94a3b8;text-align:left;font-size:13px;font-weight:400;transition:all 0.12s;}
+.nav-btn:hover{background:#1e2533;}
+.nav-btn.active{background:#3b82f6;color:#fff;font-weight:600;}
+.nav-btn i{font-size:15px;}
+#sidebar-footer{padding:10px;border-top:1px solid #2a3347;}
+#user-info{display:flex;align-items:center;gap:9px;padding:7px 10px;}
+#user-avatar{width:26px;height:26px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#60a5fa;}
+
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#topbar{padding:10px 18px;border-bottom:1px solid #2a3347;display:flex;align-items:center;gap:10px;background:#0f1420;}
+#topbar button{background:none;border:none;color:#94a3b8;font-size:19px;}
+#breadcrumb{color:#94a3b8;font-size:12px;}
+#breadcrumb span.sep{color:#2a3347;margin:0 4px;}
+#breadcrumb span.cur{color:#e2e8f0;font-size:13px;font-weight:500;}
+#content{flex:1;overflow-y:auto;padding:24px;}
+
+/* Cards / Boxes */
+.card{background:#1e2533;border:1px solid #2a3347;border-radius:10px;}
+.summary-box{background:#1e2533;border:1px solid #2a3347;border-radius:10px;padding:16px 20px;}
+.summary-label{color:#94a3b8;font-size:12px;margin-bottom:6px;}
+.summary-value{font-size:22px;font-weight:700;color:#e2e8f0;}
+
+/* Grid */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:9px 13px;text-align:left;color:#94a3b8;font-weight:500;font-size:11px;border-bottom:1px solid #2a3347;white-space:nowrap;}
+td{padding:11px 13px;color:#e2e8f0;white-space:nowrap;border-bottom:1px solid #2a3347;}
+tr:hover td{background:#252d3d;}
+.no-records td{text-align:center;color:#94a3b8;padding:28px;}
+
+/* Badge */
+.badge{padding:2px 10px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;}
+
+/* Buttons */
+.btn{padding:8px 18px;border-radius:7px;border:none;cursor:pointer;font-size:14px;font-weight:500;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-primary{background:#3b82f6;color:#fff;}
+.btn-secondary{background:transparent;color:#94a3b8;border:1px solid #2a3347;}
+.btn-danger{background:#ef4444;color:#fff;}
+.btn-success{background:#10b981;color:#fff;}
+.btn-warning{background:#f59e0b;color:#000;}
+
+/* Form Fields */
+.field{margin-bottom:14px;}
+.field label{display:block;color:#94a3b8;font-size:12px;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;background:#0f1420;border:1px solid #2a3347;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:14px;font-family:inherit;}
+.field textarea{resize:vertical;}
+.field input[type=date]{color-scheme:dark;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:#1e2533;border:1px solid #2a3347;border-radius:12px;width:100%;max-width:620px;max-height:92vh;overflow:auto;}
+.modal-box.wide{max-width:800px;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #2a3347;position:sticky;top:0;background:#1e2533;z-index:1;}
+.modal-header h2{font-size:17px;color:#e2e8f0;font-weight:600;}
+.modal-header button{background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;line-height:1;}
+.modal-body{padding:24px;}
+
+/* Filter tabs */
+.filter-tabs{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-tab{padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:#1e2533;color:#94a3b8;}
+.filter-tab.active{background:#3b82f6;color:#fff;}
+
+/* Page Header */
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.page-title{font-size:21px;font-weight:700;color:#e2e8f0;}
+
+/* Chat */
+#chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);}
+#chat-messages{flex:1;overflow-y:auto;background:#1e2533;border:1px solid #2a3347;border-radius:10px;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:14px;}
+.msg-user{align-self:flex-end;background:#3b82f6;color:#e2e8f0;padding:10px 15px;border-radius:14px 14px 3px 14px;font-size:14px;line-height:1.65;max-width:78%;white-space:pre-wrap;}
+.msg-ai{align-self:flex-start;background:#252d3d;color:#e2e8f0;padding:10px 15px;border-radius:14px 14px 14px 3px;font-size:14px;line-height:1.65;max-width:78%;white-space:pre-wrap;}
+#chat-input-row{display:flex;gap:10px;}
+#chat-input{flex:1;background:#1e2533;border:1px solid #2a3347;color:#e2e8f0;padding:11px 15px;border-radius:8px;font-size:14px;font-family:inherit;}
+.quick-btns{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;}
+.quick-btn{background:#1e2533;border:1px solid #2a3347;color:#94a3b8;padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;}
+
+/* Finance tabs */
+.fin-tab{padding:6px 16px;border-radius:20px;border:none;cursor:pointer;font-size:13px;background:#1e2533;color:#94a3b8;}
+.fin-tab.active{background:#3b82f6;color:#fff;font-weight:600;}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-day-header{padding:8px 0;text-align:center;color:#94a3b8;font-size:11px;font-weight:600;background:#151c2a;}
+.cal-cell{min-height:90px;border-right:1px solid #2a3347;border-bottom:1px solid #2a3347;padding:6px 5px;cursor:pointer;}
+.cal-cell:hover{background:#1a2236;}
+.cal-cell.today{background:#0e1e35;}
+.cal-event{border-radius:4px;padding:2px 5px;font-size:10px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:#fff;}
+
+/* Login Screen */
+#login-screen{position:fixed;inset:0;background:#0a0e1a;z-index:9999;display:flex;align-items:center;justify-content:center;}
+#login-box{background:#1e2533;border:1px solid #2a3347;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;}
+#login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center;}
+#login-logo-icon{width:44px;height:44px;background:#3b82f6;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;}
+#login-title{font-size:20px;font-weight:700;color:#e2e8f0;}
+#login-error{background:#450a0a;border:1px solid #7f1d1d;color:#f87171;padding:9px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+.login-field{margin-bottom:16px;}
+.login-field label{display:block;color:#94a3b8;font-size:12px;margin-bottom:6px;font-weight:500;}
+.login-field input{width:100%;background:#0f1420;border:1px solid #2a3347;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:14px;font-family:inherit;outline:none;transition:border 0.15s;}
+.login-field input:focus{border-color:#3b82f6;}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:42px;}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:2px;}
+#login-btn{width:100%;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:11px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;transition:background 0.15s;}
+#login-btn:hover{background:#2563eb;}
+.login-hint{text-align:center;color:#94a3b8;font-size:11px;margin-top:14px;}
+.login-hint span{color:#60a5fa;}
+
+/* Account selector */
+.account-selector{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;}
+.account-card{background:#1e2533;border:2px solid #2a3347;border-radius:10px;padding:14px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.account-card:hover{border-color:#3b82f6;background:#252d3d;}
+.account-card.active{border-color:#3b82f6;background:#1e3a5f;color:#60a5fa;}
+.account-card-type{font-size:11px;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;}
+.account-card-name{font-size:14px;font-weight:600;margin-bottom:6px;}
+.account-card-bal{font-size:13px;color:#10b981;}
+</style>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css" rel="stylesheet" onerror="this.remove()"/>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div id="login-box">
+    <div id="login-logo">
+      <div id="login-logo-icon">AL</div>
+      <div>
+        <div id="login-title">Aluminium CRM</div>
+        <div style="font-size:10px;color:#94a3b8;">Enterprise Edition</div>
+      </div>
+    </div>
+    <div id="login-error"></div>
+    <div class="login-field">
+      <label>Login ID</label>
+      <input id="login-id" type="text" placeholder="Your Login ID" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input id="login-pw" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button type="button" class="pw-toggle" onclick="togglePwVis()">👁️</button>
+      </div>
+    </div>
+    <button type="button" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-hint">Demo: <span>admin</span> / <span>admin</span></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div id="logo">
+        <div id="logo-icon">AL</div>
+        <div><div id="logo-text">Aluminium CRM</div><div id="logo-sub">v3.0</div></div>
+      </div>
+    </div>
+    <div id="nav"></div>
+    <div id="sidebar-footer">
+      <div id="user-info">
+        <div id="user-avatar">A</div>
+        <div style="flex:1;font-size:12px;overflow:hidden;">
+          <div id="user-name" style="font-weight:500;overflow:hidden;text-overflow:ellipsis;">Admin</div>
+          <div style="color:#94a3b8;font-size:11px;" id="user-role">Administrator</div>
+        </div>
+        <button style="background:none;border:none;color:#94a3b8;padding:4px;font-size:14px;cursor:pointer;" onclick="doLogout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </div>
+  <div id="main">
+    <div id="topbar">
+      <button onclick="toggleSidebar()" style="font-size:20px;">☰</button>
+      <span id="breadcrumb"><span style="color:#94a3b8;font-size:12px;">Aluminium CRM</span><span class="sep">›</span><span class="cur" id="page-label">Dashboard</span></span>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONSTANTS & BADGE COLORS
+// ══════════════════════════════════════════
+const BADGE_COLORS={
+  "Measurement":{bg:"#1e3a5f",fg:"#60a5fa"},"Quote":{bg:"#1e3350",fg:"#93c5fd"},
+  "Won":{bg:"#064e3b",fg:"#34d399"},"Loss":{bg:"#450a0a",fg:"#f87171"},
+  "Production":{bg:"#422006",fg:"#fb923c"},"On Going":{bg:"#1e3a5f",fg:"#60a5fa"},
+  "Completed":{bg:"#064e3b",fg:"#34d399"},"Bending":{bg:"#422006",fg:"#fb923c"},
+  "Waiting Profile":{bg:"#422006",fg:"#fb923c"},"Waiting Hardware":{bg:"#3b1764",fg:"#c084fc"},
+  "Waiting Glass":{bg:"#1e3a5f",fg:"#60a5fa"},"Pending":{bg:"#422006",fg:"#fb923c"},
+  "Erection":{bg:"#1e3350",fg:"#93c5fd"},"Waiting Advance":{bg:"#3b1764",fg:"#c084fc"},
+  "Approved":{bg:"#064e3b",fg:"#34d399"},"Sent":{bg:"#1e3a5f",fg:"#60a5fa"},
+  "received":{bg:"#064e3b",fg:"#34d399"},"paid":{bg:"#450a0a",fg:"#f87171"},
+  "Receivable":{bg:"#0a4520",fg:"#6ee7b7"},"Payable":{bg:"#451414",fg:"#f87171"},
+};
+
+const LEAD_ST=["Measurement","Quote","Won","Loss","Production"];
+const CLIENT_ST=["Waiting Advance","Production","Erection","Completed"];
+const PROD_ST=["Waiting Profile","Waiting Hardware","Waiting Glass","Completed"];
+const DEL_ST=["Pending","Completed"];
+const ERECT_ST=["Bending","On Going","Completed"];
+const VARIANTS=["UPVC","Aluminium","ABS"];
+const MTG_TYPES=["Meeting","Site Visit","Measurement","Follow Up","Delivery","Call","Other"];
+const MTG_COLORS={"Meeting":"#3b82f6","Site Visit":"#10b981","Measurement":"#f59e0b","Follow Up":"#8b5cf6","Delivery":"#06b6d4","Call":"#ec4899","Other":"#94a3b8"};
+const ACCOUNT_TYPES=[
+  {id:'bank',label:'Bank Account',icon:'🏦'},
+  {id:'cash',label:'Cash Account',icon:'💵'},
+  {id:'capital',label:'Capital Account',icon:'📊'},
+  {id:'expense',label:'Expense Account',icon:'📉'}
+];
+
+// ══════════════════════════════════════════
+// DATABASE
+// ══════════════════════════════════════════
+let DB={
+  leads:[
+    {id:1,projectName:"Sunrise Apartments",clientName:"Kumar",phone:"9876543210",location:"Chennai",variant:"Sliding",ref:"REF001",status:"Quote",createdAt:"2024-01-10"},
+    {id:2,projectName:"Green Villa",clientName:"Raj Paries",phone:"9876543211",location:"Coimbatore",variant:"Casement",ref:"REF002",status:"Won",createdAt:"2024-01-12"},
+    {id:3,projectName:"Tech Park",clientName:"Techno Engineers",phone:"9876543212",location:"Chennai",variant:"Fixed",ref:"REF003",status:"Measurement",createdAt:"2024-01-15"},
+    {id:4,projectName:"Lake View",clientName:"Hillal Basha",phone:"9876543213",location:"Madurai",variant:"Sliding",ref:"REF004",status:"Loss",createdAt:"2024-01-18"},
+    {id:5,projectName:"City Center",clientName:"Neharadha",phone:"9876543214",location:"Salem",variant:"Casement",ref:"REF005",status:"Production",createdAt:"2024-01-20"},
+  ],
+  measurements:[{id:1,leadId:3,clientName:"Techno Engineers",projectName:"Tech Park",windows:24,variant:"Fixed",queries:"Need thermal glass options",date:"2024-01-16"}],
+  quotes:[
+    {id:1,leadId:1,quoteNo:"QT-001",clientName:"Kumar",projectName:"Sunrise Apartments",windowsQty:12,sqft:450,basicValue:315000,taxValue:56700,otherValue:12000,totalValue:383700,date:"2024-01-14",status:"Sent"},
+    {id:2,leadId:2,quoteNo:"QT-002",clientName:"Raj Paries",projectName:"Green Villa",windowsQty:18,sqft:680,basicValue:476000,taxValue:85680,otherValue:18000,totalValue:579680,date:"2024-01-16",status:"Approved"},
+    {id:3,leadId:5,quoteNo:"QT-003",clientName:"Neharadha",projectName:"City Center",windowsQty:8,sqft:290,basicValue:203000,taxValue:36540,otherValue:8000,totalValue:247540,date:"2024-01-21",status:"Approved"},
+  ],
+  clients:[
+    {id:1,leadId:2,clientName:"Raj Paries",projectName:"Green Villa",phone:"9876543211",location:"Coimbatore",variant:"Casement",advance:100000,totalReceived:150000,totalValue:579680,status:"Production",createdAt:"2024-01-17"},
+    {id:2,leadId:5,clientName:"Neharadha",projectName:"City Center",phone:"9876543214",location:"Salem",variant:"Casement",advance:50000,totalReceived:50000,totalValue:247540,status:"Erection",createdAt:"2024-01-22"},
+  ],
+  purchases:[{id:1,clientId:1,clientName:"Raj Paries",projectName:"Green Villa",profile:45000,hardware:12000,glass:38000,powderCoat:8000,erection:15000,transport:5000,other:3000,date:"2024-01-20"}],
+  productions:[{id:1,clientId:1,clientName:"Raj Paries",projectName:"Green Villa",status:"Waiting Glass",notes:"Profile & Hardware ready",date:"2024-01-22"}],
+  deliveries:[{id:1,clientId:2,clientName:"Neharadha",projectName:"City Center",status:"Completed",reason:"All items packed and dispatched",date:"2024-01-25"}],
+  erections:[{id:1,clientId:2,clientName:"Neharadha",projectName:"City Center",personName:"Rajan Kumar",sqft:290,ratePerSqft:45,totalAmount:13050,paid:6000,date:"2024-01-26",status:"On Going"}],
+  expenses:[
+    {id:1,category:"Transport",amount:5000,description:"Material delivery",date:"2024-01-15",clientName:"Raj Paries"},
+    {id:2,category:"Office",amount:2500,description:"Stationery & misc",date:"2024-01-18",clientName:"-"},
+  ],
+  payments:[
+    {id:1,type:"received",party:"Raj Paries",amount:150000,date:"2024-01-17",notes:"Advance payment",mode:"Cash"},
+    {id:2,type:"received",party:"Neharadha",amount:50000,date:"2024-01-22",notes:"Initial advance",mode:"UPI"},
+    {id:3,type:"paid",party:"Al Profile Supplier",amount:45000,date:"2024-01-20",notes:"Profile purchase",mode:"Bank Transfer"},
+  ],
+  vendors:[
+    {id:'v1',name:"Al Profile Supplier",phone:"9988776655",category:"Profile",balance:-45000},
+    {id:'v2',name:"Glass World",phone:"9988776644",category:"Glass",balance:-38000},
+  ],
+  accounts:[
+    {id:'a1',type:'bank',name:'ICICI Bank',balance:100000},
+    {id:'a2',type:'cash',name:'Cash in Hand',balance:50000},
+    {id:'a3',type:'capital',name:'Owner Capital',balance:200000}
+  ],
+  entries:[
+    {id:1,date:'2024-01-17',accountId:'a1',type:'client',entityId:1,entityName:'Raj Paries',dc:'credit',amount:150000,invoiceNo:'INV-001',notes:'Advance payment received'},
+    {id:2,date:'2024-01-20',accountId:'a1',type:'vendor',entityId:'v1',entityName:'Al Profile Supplier',dc:'debit',amount:45000,invoiceNo:'PO-001',notes:'Profile purchase payment'}
+  ],
+  users:[
+    {id:1,name:"Admin",email:"admin@aluminiumcrm.com",role:"Administrator",active:true},
+    {id:2,name:"Sales Manager",email:"sales@aluminiumcrm.com",role:"Sales",active:true},
+  ],
+  weeklyNotes:[
+    {id:1,week:"Week 1 - Jan 8-14, 2024",summary:"3 new leads. Kumar quote sent ₹3.84L. Tech Park measurement scheduled.",date:"2024-01-14"},
+    {id:2,week:"Week 2 - Jan 15-21, 2024",summary:"Raj Paries WON ₹5.8L. Production started. Neharadha quote approved.",date:"2024-01-21"},
+    {id:3,week:"Week 3 - Jan 22-28, 2024",summary:"Neharadha erection started. Raj Paries glass pending. ₹2L received.",date:"2024-01-28"},
+  ],
+  meetings:[
+    {id:1,title:"Site Visit - Raj Paries",date:"2024-01-17",time:"10:00",type:"Site Visit",client:"Raj Paries",location:"Coimbatore",notes:"Check erection progress",status:"Done"},
+    {id:2,title:"Quote Discussion - Kumar",date:"2024-01-19",time:"14:00",type:"Meeting",client:"Kumar",location:"Chennai Office",notes:"Finalize sliding window specs",status:"Done"},
+    {id:3,title:"Measurement - Tech Park",date:"2024-01-22",time:"09:00",type:"Measurement",client:"Techno Engineers",location:"Chennai",notes:"Take all window measurements",status:"Pending"},
+  ],
+};
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentPage="dashboard";
+let currentUser=null;
+let sidebarOpen=true;
+
+// ══════════════════════════════════════════
+// DB PERSISTENCE
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// FIREBASE CONFIG — இந்த URL மட்டும் மாத்துங்க!
+// ══════════════════════════════════════════
+const FIREBASE_URL = "https://aluminium-crm-default-rtdb.asia-southeast1.firebasedatabase.app"; 
+// Example: "https://my-crm-12345-default-rtdb.firebaseio.com"
+
+async function saveDB(){
+  try{
+    await fetch(FIREBASE_URL+"/crm_db.json",{
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(DB)
+    });
+  }catch(e){console.error("Save failed:",e);}
+}
+
+async function loadDB(){
+  try{
+    const res=await fetch(FIREBASE_URL+"/crm_db.json");
+    const d=await res.json();
+    if(d && typeof d==="object") Object.assign(DB,d);
+  }catch(e){console.error("Load failed:",e);}
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+const INR=n=>"₹"+Number(n||0).toLocaleString("en-IN");
+const today=()=>new Date().toISOString().split("T")[0];
+
+function esc(v){
+  if(v===null||v===undefined)return "";
+  return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function badge(status){
+  const bc=BADGE_COLORS[status]||{bg:"#1e2533",fg:"#94a3b8"};
+  return `<span class="badge" style="background:${bc.bg};color:${bc.fg}">${status}</span>`;
+}
+
+function toggleSidebar(){
+  sidebarOpen=!sidebarOpen;
+  document.getElementById("sidebar").classList.toggle("closed",!sidebarOpen);
+}
+
+function tbl(cols,rows,onRowClick=""){
+  let h=cols.map(c=>`<th>${c.l}</th>`).join('');
+  let body='';
+  if(!rows||!rows.length){
+    body=`<tr class="no-records"><td colspan="${cols.length}">No records</td></tr>`;
+  } else {
+    rows.forEach((row,i)=>{
+      const onclick=onRowClick?`onclick="${onRowClick}(${i})"` :'';
+      let cells=cols.map(c=>{
+        let v=row[c.k];
+        if(c.r) return `<td>${c.r(v,row,i)}</td>`;
+        return `<td>${v===null||v===undefined?'-':esc(String(v))}</td>`;
+      }).join('');
+      body+=`<tr ${onclick} style="${onRowClick?'cursor:pointer;':''}">${cells}</tr>`;
+    });
+  }
+  return `<div class="tbl-wrap"><table><thead><tr>${h}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function field(label,id,type,value,options,readOnly){
+  value=value===undefined||value===null?'':value;
+  const ro=readOnly?'readonly disabled style="cursor:not-allowed;color:#94a3b8;"':'';
+  let input;
+  if(options&&Array.isArray(options)){
+    const opts=options.map(o=>`<option value="${esc(o)}" ${o==value?'selected':''}>${o}</option>`).join('');
+    input=`<select id="${id}" ${ro}>${opts}</select>`;
+  } else if(type==="textarea"){
+    input=`<textarea id="${id}" rows="3" ${ro}>${esc(value)}</textarea>`;
+  } else {
+    input=`<input type="${type||'text'}" id="${id}" value="${esc(value)}" ${ro}/>`;
+  }
+  return `<div class="field"><label>${label}</label>${input}</div>`;
+}
+
+function getForm(ids){
+  const res={};
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) res[id]=el.type==='checkbox'?el.checked:el.value;
+  });
+  return res;
+}
+
+// ══════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════
+function showModal(title,bodyHtml,wide){
+  const r=document.getElementById('modal-root');
+  r.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-box${wide?' wide':''}"><div class="modal-header"><h2>${title}</h2><button onclick="closeModal()">✕</button></div><div class="modal-body">${bodyHtml}</div></div></div>`;
+}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+
+// ══════════════════════════════════════════
+// LOGIN / LOGOUT
+// ══════════════════════════════════════════
+function togglePwVis(){
+  const pw=document.getElementById('login-pw');
+  const btn=document.querySelector('.pw-toggle');
+  const isPassword=pw.type==='password';
+  pw.type=isPassword?'text':'password';
+  if(btn) btn.textContent=isPassword?'🙈':'👁️';
+}
+
+async function doLogin(){
+  const idEl=document.getElementById('login-id');
+  const pwEl=document.getElementById('login-pw');
+  const errEl=document.getElementById('login-error');
+  const id=(idEl?.value||'').trim();
+  const pw=(pwEl?.value||'').trim();
+
+  // Credentials check
+  const USERS=[
+    {id:'admin',pw:'admin',name:'Administrator',role:'Administrator'},
+    {id:'sales',pw:'sales123',name:'Sales Manager',role:'Sales'},
+  ];
+  const match=USERS.find(u=>u.id===id&&u.pw===pw);
+
+  if(match){
+    currentUser={id:match.id,name:match.name,role:match.role};
+    localStorage.setItem('crm_session',JSON.stringify(currentUser));
+    const btn=document.getElementById('login-btn');
+    if(btn){btn.textContent='⏳ Data loading...';btn.disabled=true;}
+    await loadDB();
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('user-avatar').textContent=match.name.charAt(0).toUpperCase();
+    document.getElementById('user-name').textContent=match.name;
+    document.getElementById('user-role').textContent=match.role;
+    buildNav();
+    renderPage();
+  } else {
+    if(errEl){
+      errEl.textContent='Invalid credentials. Demo: admin / admin';
+      errEl.style.display='block';
+    }
+  }
+}
+
+function doLogout(){
+  localStorage.removeItem('crm_session');
+  sessionStorage.removeItem('crm_session');
+  location.reload();
+}
+
+// ══════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════
+const NAV=[
+  {k:"dashboard",l:"Dashboard",i:"ti-layout-dashboard"},
+  {k:"leads",l:"Leads",i:"ti-users"},
+  {k:"measurements",l:"Measurement",i:"ti-ruler"},
+  {k:"quotes",l:"Quotes",i:"ti-file-invoice"},
+  {k:"orders",l:"Orders",i:"ti-shopping-cart"},
+  {k:"clients",l:"Clients",i:"ti-user-check"},
+  {k:"purchase",l:"Purchase",i:"ti-truck"},
+  {k:"production",l:"Production",i:"ti-settings-2"},
+  {k:"delivery",l:"Delivery",i:"ti-package"},
+  {k:"erection",l:"Erection",i:"ti-building-warehouse"},
+  {k:"finance",l:"Finance",i:"ti-currency-rupee"},
+  {k:"accounts",l:"Accounts",i:"ti-credit-card"},
+  {k:"entries",l:"Journal Entries",i:"ti-notebook"},
+  {k:"schedule",l:"Schedule",i:"ti-calendar"},
+  {k:"ai",l:"AI Assistant",i:"ti-robot"},
+  {k:"users",l:"Users",i:"ti-shield-lock"},
+];
+
+function buildNav(){
+  const nav=document.getElementById('nav');
+  if(!nav) return;
+  nav.innerHTML=NAV.map(n=>`
+    <button class="nav-btn${currentPage===n.k?' active':''}" onclick="navigate('${n.k}')">
+      <i class="ti ${n.i}"></i>${n.l}
+    </button>`).join('');
+}
+
+function navigate(page){
+  currentPage=page;
+  buildNav();
+  const lbl=NAV.find(n=>n.k===page)?.l||page;
+  document.getElementById('page-label').textContent=lbl;
+  renderPage();
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard(){
+  const qQty=DB.quotes.length, qVal=DB.quotes.reduce((s,q)=>s+q.totalValue,0);
+  const oQty=DB.clients.length, oVal=DB.clients.reduce((s,c)=>s+c.totalValue,0);
+  const recv=DB.clients.reduce((s,c)=>s+c.totalReceived,0);
+  const exp=DB.expenses.reduce((s,e)=>s+e.amount,0)+DB.purchases.reduce((s,p)=>s+p.profile+p.hardware+p.glass+p.powderCoat+p.erection+p.transport+p.other,0);
+  const bal=DB.clients.reduce((s,c)=>s+(c.totalValue-c.totalReceived),0);
+  const bankBal=DB.accounts.filter(a=>a.type==='bank').reduce((s,a)=>s+a.balance,0);
+
+  return `
+    <div class="page-header"><h1 class="page-title">Dashboard</h1><div style="font-size:12px;color:#94a3b8;">${new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
+    <div class="grid-4" style="margin-bottom:16px;">
+      <div class="summary-box"><div class="summary-label">Quote Value</div><div class="summary-value" style="color:#60a5fa">${INR(qVal)}</div></div>
+      <div class="summary-box"><div class="summary-label">Order Value</div><div class="summary-value" style="color:#10b981">${INR(oVal)}</div></div>
+      <div class="summary-box"><div class="summary-label">Amount Received</div><div class="summary-value" style="color:#10b981">${INR(recv)}</div></div>
+      <div class="summary-box"><div class="summary-label">Balance to Collect</div><div class="summary-value" style="color:#ef4444">${INR(bal)}</div></div>
+      <div class="summary-box"><div class="summary-label">Total Expenses</div><div class="summary-value" style="color:#f59e0b">${INR(exp)}</div></div>
+      <div class="summary-box"><div class="summary-label">Bank Balance</div><div class="summary-value" style="color:#3b82f6">${INR(bankBal)}</div></div>
+      <div class="summary-box"><div class="summary-label">Quote Qty</div><div class="summary-value">${qQty}</div></div>
+      <div class="summary-box"><div class="summary-label">Active Orders</div><div class="summary-value">${oQty}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="padding:12px 18px;border-bottom:1px solid #2a3347;font-weight:600;font-size:13px;">📅 Weekly Activity</div>
+      ${DB.weeklyNotes.slice(-3).map(w=>`
+        <div style="padding:10px 18px;border-bottom:1px solid #2a3347;">
+          <div style="color:#60a5fa;font-size:12px;font-weight:600;margin-bottom:3px;">${w.week}</div>
+          <div style="color:#94a3b8;font-size:13px;">${w.summary}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card" style="overflow:hidden;"><div style="padding:13px 18px;border-bottom:1px solid #2a3347;font-weight:600;font-size:14px;">Recent Leads</div>${tbl([{k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"status",l:"Status",r:v=>badge(v)}],DB.leads.slice(-5).reverse())}</div>
+      <div class="card" style="overflow:hidden;"><div style="padding:13px 18px;border-bottom:1px solid #2a3347;font-weight:600;font-size:14px;">Recent Quotes</div>${tbl([{k:"clientName",l:"Client"},{k:"quoteNo",l:"Quote #"},{k:"totalValue",l:"Value",r:v=>`<span style="color:#10b981">${INR(v)}</span>`}],DB.quotes.slice(-5).reverse())}</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// LEADS
+// ══════════════════════════════════════════
+let _leadFilter="All";
+function renderLeads(){
+  const filtered=_leadFilter==="All"?DB.leads:DB.leads.filter(l=>l.status===_leadFilter);
+  const tabs=["All",...LEAD_ST].map(s=>`<button class="filter-tab${_leadFilter===s?' active':''}" onclick="setLeadFilter('${s}')">${s}</button>`).join('');
+  return `
+    <div class="page-header"><h1 class="page-title">Leads</h1><button class="btn btn-primary" onclick="openLeadAdd()">+ Add Lead</button></div>
+    <div class="filter-tabs">${tabs}</div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"projectName",l:"Project"},{k:"clientName",l:"Client"},{k:"phone",l:"Phone"},
+      {k:"location",l:"Location"},{k:"variant",l:"Variant"},{k:"ref",l:"Ref"},{k:"createdAt",l:"Date"},
+      {k:"status",l:"Status",r:v=>badge(v)},
+      {k:"id",l:"Status Change",r:(_,row)=>{const idx=DB.leads.indexOf(row);return`<select onchange="changeLeadStatus(${idx},this.value)" onclick="event.stopPropagation()" style="background:#0f1420;border:1px solid #2a3347;color:#e2e8f0;padding:4px 7px;border-radius:6px;font-size:12px;">${LEAD_ST.map(s=>`<option ${s===row.status?'selected':''}>${s}</option>`).join('')}</select>`;}},
+      {k:"id",l:"Edit",r:(_,row)=>{const idx=DB.leads.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openLeadEdit(${idx})">✏️ Edit</button>`;}},
+    ],filtered)}</div>`;
+}
+function setLeadFilter(f){_leadFilter=f;renderPage();}
+function changeLeadStatus(idx,ns){
+  const lead=DB.leads[idx];lead.status=ns;
+  if(ns==="Measurement"&&!DB.measurements.find(m=>m.leadId===lead.id))
+    DB.measurements.push({id:Date.now(),leadId:lead.id,clientName:lead.clientName,projectName:lead.projectName,windows:"",variant:lead.variant,queries:"",date:today()});
+  if(ns==="Won"&&!DB.clients.find(c=>c.leadId===lead.id)){
+    const q=DB.quotes.find(q=>q.leadId===lead.id);
+    DB.clients.push({id:Date.now(),leadId:lead.id,clientName:lead.clientName,projectName:lead.projectName,phone:lead.phone,location:lead.location,variant:lead.variant,advance:0,totalReceived:0,totalValue:q?.totalValue||0,status:"Waiting Advance",createdAt:today()});
+  }
+  saveDB();renderPage();
+}
+function openLeadAdd(){
+  showModal("Add New Lead",`<div class="grid-2">
+    ${field("Project Name *","f_projectName","text")}${field("Client Name *","f_clientName","text")}
+    ${field("Phone","f_phone","tel")}${field("Location","f_location","text")}
+    ${field("Variant","f_variant","select","UPVC",VARIANTS)}${field("Reference","f_ref","text")}
+    ${field("Status","f_status","select","Measurement",LEAD_ST)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLead(-1)">Save Lead</button>
+    </div>`);
+}
+function openLeadEdit(idx){
+  const r=DB.leads[idx];
+  showModal("Edit Lead",`<div class="grid-2">
+    ${field("Project Name *","f_projectName","text",r.projectName)}${field("Client Name *","f_clientName","text",r.clientName)}
+    ${field("Phone","f_phone","tel",r.phone)}${field("Location","f_location","text",r.location)}
+    ${field("Variant","f_variant","select",r.variant,VARIANTS)}${field("Reference","f_ref","text",r.ref)}
+    ${field("Status","f_status","select",r.status,LEAD_ST)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLead(${idx})">Update Lead</button>
+    </div>`);
+}
+function saveLead(idx){
+  const f=getForm(["f_projectName","f_clientName","f_phone","f_location","f_variant","f_ref","f_status"]);
+  if(!f.f_clientName||!f.f_projectName){alert("Fill required fields");return;}
+  if(idx===-1) DB.leads.push({id:Date.now(),projectName:f.f_projectName,clientName:f.f_clientName,phone:f.f_phone,location:f.f_location,variant:f.f_variant,ref:f.f_ref,status:f.f_status,createdAt:today()});
+  else Object.assign(DB.leads[idx],{projectName:f.f_projectName,clientName:f.f_clientName,phone:f.f_phone,location:f.f_location,variant:f.f_variant,ref:f.f_ref,status:f.f_status});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// MEASUREMENTS
+// ══════════════════════════════════════════
+function renderMeasurements(){
+  return `<div class="page-header"><h1 class="page-title">Measurements</h1></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"windows",l:"Windows"},
+      {k:"variant",l:"Variant"},{k:"date",l:"Date"},
+      {k:"queries",l:"Queries",r:v=>`<span style="color:#94a3b8">${v||'-'}</span>`},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.measurements.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openMeasEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.measurements)}</div>`;
+}
+function openMeasEdit(idx){
+  const r=DB.measurements[idx];
+  showModal(`Measurement: ${r.clientName}`,`<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("No. of Windows","f_win","number",r.windows)}${field("Variant","f_var","select",r.variant,VARIANTS)}
+    ${field("Date","f_date","date",r.date)}</div>
+    ${field("Queries / Notes","f_q","textarea",r.queries)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMeas(${idx})">Update</button>
+    </div>`);
+}
+function saveMeas(idx){
+  const f=getForm(["f_cn","f_pn","f_win","f_var","f_date","f_q"]);
+  Object.assign(DB.measurements[idx],{clientName:f.f_cn,projectName:f.f_pn,windows:f.f_win,variant:f.f_var,date:f.f_date,queries:f.f_q});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// QUOTES
+// ══════════════════════════════════════════
+function renderQuotes(){
+  return `<div class="page-header"><h1 class="page-title">Quotes</h1><button class="btn btn-primary" onclick="openQuoteAdd()">+ New Quote</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"quoteNo",l:"Quote #"},{k:"clientName",l:"Client"},{k:"projectName",l:"Project"},
+      {k:"windowsQty",l:"Windows"},{k:"sqft",l:"Sq.ft"},
+      {k:"totalValue",l:"Total",r:v=>`<span style="color:#10b981;font-weight:600">${INR(v)}</span>`},
+      {k:"status",l:"Status",r:v=>badge(v)},{k:"date",l:"Date"},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.quotes.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openQuoteEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.quotes)}</div>`;
+}
+function openQuoteAdd(){showModal("New Quote",quoteForm(-1));}
+function openQuoteEdit(idx){showModal("Edit Quote",quoteForm(idx));}
+function quoteForm(idx){
+  const r=idx===-1?{clientName:"",projectName:"",windowsQty:0,sqft:0,basicValue:0,taxValue:0,otherValue:0,status:"Sent"}:DB.quotes[idx];
+  return `<div class="grid-2">
+    ${field("Client Name *","f_cn","text",r.clientName)}${field("Project Name *","f_pn","text",r.projectName)}
+    ${field("Windows Qty","f_wq","number",r.windowsQty)}${field("Sq.ft","f_sf","number",r.sqft)}
+    ${field("Basic Value (₹)","f_bv","number",r.basicValue)}${field("Tax Value (₹)","f_tv","number",r.taxValue)}
+    ${field("Other Value (₹)","f_ov","number",r.otherValue)}${field("Status","f_st","select",r.status,["Sent","Approved","Rejected"])}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuote(${idx})">${idx===-1?"Save Quote":"Update Quote"}</button>
+    </div>`;
+}
+function saveQuote(idx){
+  const f=getForm(["f_cn","f_pn","f_wq","f_sf","f_bv","f_tv","f_ov","f_st"]);
+  if(!f.f_cn||!f.f_pn){alert("Fill required fields");return;}
+  const total=(+f.f_bv)+(+f.f_tv)+(+f.f_ov);
+  if(idx===-1) DB.quotes.push({id:Date.now(),quoteNo:`QT-${String(DB.quotes.length+1).padStart(3,"0")}`,clientName:f.f_cn,projectName:f.f_pn,windowsQty:+f.f_wq,sqft:+f.f_sf,basicValue:+f.f_bv,taxValue:+f.f_tv,otherValue:+f.f_ov,totalValue:total,date:today(),status:f.f_st});
+  else Object.assign(DB.quotes[idx],{clientName:f.f_cn,projectName:f.f_pn,windowsQty:+f.f_wq,sqft:+f.f_sf,basicValue:+f.f_bv,taxValue:+f.f_tv,otherValue:+f.f_ov,totalValue:total,status:f.f_st});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// ORDERS
+// ══════════════════════════════════════════
+function renderOrders(){
+  return `<div class="page-header"><h1 class="page-title">Orders</h1></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"phone",l:"Phone"},
+      {k:"location",l:"Location"},{k:"variant",l:"Variant"},
+      {k:"totalValue",l:"Order Value",r:v=>`<span style="color:#10b981;font-weight:600">${INR(v)}</span>`},
+      {k:"status",l:"Status",r:v=>badge(v)},{k:"createdAt",l:"Date"},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.clients.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openOrderEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.clients)}</div>`;
+}
+function openOrderEdit(idx){
+  const r=DB.clients[idx];
+  showModal(`Order: ${r.clientName}`,`<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Phone","f_ph","tel",r.phone)}${field("Location","f_loc","text",r.location)}
+    ${field("Variant","f_var","select",r.variant,VARIANTS)}${field("Order Value (₹)","f_tv","number",r.totalValue)}
+    ${field("Advance (₹)","f_adv","number",r.advance)}${field("Total Received (₹)","f_tr","number",r.totalReceived)}
+    ${field("Status","f_st","select",r.status,CLIENT_ST)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveOrder(${idx})">Update Order</button>
+    </div>`);
+}
+function saveOrder(idx){
+  const f=getForm(["f_cn","f_pn","f_ph","f_loc","f_var","f_tv","f_adv","f_tr","f_st"]);
+  Object.assign(DB.clients[idx],{clientName:f.f_cn,projectName:f.f_pn,phone:f.f_ph,location:f.f_loc,variant:f.f_var,totalValue:+f.f_tv,advance:+f.f_adv,totalReceived:+f.f_tr,status:f.f_st});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════════
+function renderClients(){
+  return `<div class="page-header"><h1 class="page-title">Clients</h1></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"phone",l:"Phone"},{k:"location",l:"Location"},
+      {k:"totalValue",l:"Order Value",r:v=>`<span style="color:#10b981">${INR(v)}</span>`},
+      {k:"totalReceived",l:"Received",r:v=>`<span style="color:#60a5fa">${INR(v)}</span>`},
+      {k:"totalValue",l:"Balance",r:(v,row)=>`<span style="color:#ef4444">${INR(v-row.totalReceived)}</span>`},
+      {k:"status",l:"Status",r:v=>badge(v)},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.clients.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openClientEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.clients)}</div>`;
+}
+function openClientEdit(idx){
+  const r=DB.clients[idx];
+  showModal(`Client: ${r.clientName}`,`<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Phone","f_ph","tel",r.phone)}${field("Location","f_loc","text",r.location)}
+    ${field("Order Value (₹)","f_tv","number",r.totalValue)}${field("Advance (₹)","f_adv","number",r.advance)}
+    ${field("Total Received (₹)","f_tr","number",r.totalReceived)}${field("Status","f_st","select",r.status,CLIENT_ST)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient(${idx})">Update Client</button>
+    </div>`);
+}
+function saveClient(idx){
+  const f=getForm(["f_cn","f_pn","f_ph","f_loc","f_tv","f_adv","f_tr","f_st"]);
+  Object.assign(DB.clients[idx],{clientName:f.f_cn,projectName:f.f_pn,phone:f.f_ph,location:f.f_loc,totalValue:+f.f_tv,advance:+f.f_adv,totalReceived:+f.f_tr,status:f.f_st});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// PURCHASE
+// ══════════════════════════════════════════
+const PKEYS=["profile","hardware","glass","powderCoat","erection","transport","other"];
+function renderPurchase(){
+  return `<div class="page-header"><h1 class="page-title">Purchase</h1><button class="btn btn-primary" onclick="openPurchaseAdd()">+ Add Purchase</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"date",l:"Date"},
+      ...PKEYS.map(k=>({k,l:k.charAt(0).toUpperCase()+k.slice(1).replace(/([A-Z])/g," $1"),r:v=>INR(v)})),
+      {k:"id",l:"Total",r:(_,row)=>`<span style="color:#ef4444;font-weight:600">${INR(PKEYS.reduce((s,k)=>s+(+row[k]||0),0))}</span>`},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.purchases.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openPurchaseEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.purchases)}</div>`;
+}
+function purchaseForm(idx){
+  const r=idx===-1?{clientName:"",projectName:"",profile:0,hardware:0,glass:0,powderCoat:0,erection:0,transport:0,other:0}:DB.purchases[idx];
+  return `<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Profile (₹)","f_prof","number",r.profile)}${field("Hardware (₹)","f_hw","number",r.hardware)}
+    ${field("Glass (₹)","f_gl","number",r.glass)}${field("Powder Coat (₹)","f_pc","number",r.powderCoat)}
+    ${field("Erection (₹)","f_er","number",r.erection)}${field("Transport (₹)","f_tr","number",r.transport)}
+    ${field("Other (₹)","f_ot","number",r.other)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePurchase(${idx})">${idx===-1?"Save":"Update"}</button>
+    </div>`;
+}
+function openPurchaseAdd(){showModal("Add Purchase",purchaseForm(-1));}
+function openPurchaseEdit(idx){showModal("Edit Purchase",purchaseForm(idx));}
+function savePurchase(idx){
+  const f=getForm(["f_cn","f_pn","f_prof","f_hw","f_gl","f_pc","f_er","f_tr","f_ot"]);
+  const obj={clientName:f.f_cn,projectName:f.f_pn,profile:+f.f_prof,hardware:+f.f_hw,glass:+f.f_gl,powderCoat:+f.f_pc,erection:+f.f_er,transport:+f.f_tr,other:+f.f_ot};
+  if(idx===-1) DB.purchases.push({id:Date.now(),date:today(),...obj});
+  else Object.assign(DB.purchases[idx],obj);
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// PRODUCTION
+// ══════════════════════════════════════════
+function renderProduction(){
+  return `<div class="page-header"><h1 class="page-title">Production</h1><button class="btn btn-primary" onclick="openProdAdd()">+ Add</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},
+      {k:"status",l:"Status",r:v=>badge(v)},{k:"notes",l:"Notes"},{k:"date",l:"Date"},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.productions.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openProdEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.productions)}</div>`;
+}
+function prodForm(idx){
+  const r=idx===-1?{clientName:"",projectName:"",status:"Waiting Profile",notes:""}:DB.productions[idx];
+  return `<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Status","f_st","select",r.status,PROD_ST)}</div>
+    ${field("Notes","f_notes","textarea",r.notes)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProd(${idx})">${idx===-1?"Save":"Update"}</button>
+    </div>`;
+}
+function openProdAdd(){showModal("Add Production",prodForm(-1));}
+function openProdEdit(idx){showModal("Edit Production",prodForm(idx));}
+function saveProd(idx){
+  const f=getForm(["f_cn","f_pn","f_st","f_notes"]);
+  if(idx===-1){DB.productions.push({id:Date.now(),clientName:f.f_cn,projectName:f.f_pn,status:f.f_st,notes:f.f_notes,date:today()});}
+  else{
+    Object.assign(DB.productions[idx],{clientName:f.f_cn,projectName:f.f_pn,status:f.f_st,notes:f.f_notes});
+    if(f.f_st==="Completed"){
+      const cl=DB.clients.find(c=>c.clientName===f.f_cn);
+      if(cl&&!DB.deliveries.find(d=>d.clientId===cl.id))
+        DB.deliveries.push({id:Date.now(),clientId:cl.id,clientName:f.f_cn,projectName:f.f_pn,status:"Pending",reason:"",date:today()});
+    }
+  }
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// DELIVERY
+// ══════════════════════════════════════════
+function renderDelivery(){
+  return `<div class="page-header"><h1 class="page-title">Delivery</h1></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},
+      {k:"status",l:"Status",r:v=>badge(v)},{k:"reason",l:"Reason"},{k:"date",l:"Date"},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.deliveries.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openDelivEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.deliveries)}</div>`;
+}
+function openDelivEdit(idx){
+  const r=DB.deliveries[idx];
+  showModal(`Delivery: ${r.clientName}`,`<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Status","f_st","select",r.status,DEL_ST)}${field("Date","f_date","date",r.date)}</div>
+    ${field("Reason / Notes","f_reason","textarea",r.reason)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeliv(${idx})">Update Delivery</button>
+    </div>`);
+}
+function saveDeliv(idx){
+  const f=getForm(["f_cn","f_pn","f_st","f_date","f_reason"]);
+  Object.assign(DB.deliveries[idx],{clientName:f.f_cn,projectName:f.f_pn,status:f.f_st,date:f.f_date,reason:f.f_reason});
+  if(f.f_st==="Completed"){
+    const cl=DB.clients.find(c=>c.clientName===f.f_cn);
+    if(cl&&!DB.erections.find(e=>e.clientId===DB.deliveries[idx].clientId))
+      DB.erections.push({id:Date.now(),clientId:DB.deliveries[idx].clientId,clientName:f.f_cn,projectName:f.f_pn,personName:"",sqft:0,ratePerSqft:45,totalAmount:0,paid:0,date:today(),status:"Bending"});
+  }
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// ERECTION
+// ══════════════════════════════════════════
+function renderErection(){
+  return `<div class="page-header"><h1 class="page-title">Erection</h1></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"clientName",l:"Client"},{k:"projectName",l:"Project"},{k:"personName",l:"Person"},
+      {k:"sqft",l:"Sq.ft"},{k:"ratePerSqft",l:"Rate/Sqft"},
+      {k:"totalAmount",l:"Total",r:v=>INR(v)},
+      {k:"paid",l:"Paid",r:v=>`<span style="color:#10b981">${INR(v)}</span>`},
+      {k:"totalAmount",l:"Balance",r:(v,row)=>`<span style="color:#ef4444">${INR(v-row.paid)}</span>`},
+      {k:"status",l:"Status",r:v=>badge(v)},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.erections.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openErectEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.erections)}</div>`;
+}
+function openErectEdit(idx){
+  const r=DB.erections[idx];
+  showModal(`Erection: ${r.clientName}`,`<div class="grid-2">
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Project Name","f_pn","text",r.projectName)}
+    ${field("Person Name","f_per","text",r.personName)}${field("Sq.ft","f_sf","number",r.sqft)}
+    ${field("Rate per Sq.ft (₹)","f_rate","number",r.ratePerSqft)}${field("Amount Paid (₹)","f_paid","number",r.paid)}
+    ${field("Status","f_st","select",r.status,ERECT_ST)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveErect(${idx})">Update Erection</button>
+    </div>`);
+}
+function saveErect(idx){
+  const f=getForm(["f_cn","f_pn","f_per","f_sf","f_rate","f_paid","f_st"]);
+  const sqft=+f.f_sf,rate=+f.f_rate;
+  Object.assign(DB.erections[idx],{clientName:f.f_cn,projectName:f.f_pn,personName:f.f_per,sqft,ratePerSqft:rate,totalAmount:sqft*rate,paid:+f.f_paid,status:f.f_st});
+  if(f.f_st==="Completed") DB.clients.forEach(c=>{if(c.clientName===f.f_cn)c.status="Completed";});
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// FINANCE
+// ══════════════════════════════════════════
+let _finTab="Tally";
+function renderFinance(){
+  const tabs=["Tally","Summary","Payments","Expenses","Vendors"];
+  const tabBar=tabs.map(t=>`<button class="fin-tab${_finTab===t?' active':''}" onclick="setFinTab('${t}')">${t}</button>`).join(' ');
+  let content='';
+  if(_finTab==="Tally") content=renderTally();
+  else if(_finTab==="Summary") content=renderFinSummary();
+  else if(_finTab==="Payments") content=renderPayments();
+  else if(_finTab==="Expenses") content=renderExpenses();
+  else if(_finTab==="Vendors") content=renderFinVendors();
+  return `<div class="page-header"><h1 class="page-title">Finance</h1><button class="btn btn-secondary" onclick="printTally()">🖨️ Print Tally</button></div>
+    <div style="display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap;">${tabBar}</div>${content}`;
+}
+function setFinTab(t){_finTab=t;renderPage();}
+
+function buildLedger(){
+  const rows=[];
+  DB.payments.forEach(p=>rows.push({date:p.date,particulars:p.party,voucher:p.type==="received"?"Receipt":"Payment",mode:p.mode||"-",dr:p.type==="paid"?p.amount:0,cr:p.type==="received"?p.amount:0,notes:p.notes||""}));
+  DB.expenses.forEach(e=>rows.push({date:e.date,particulars:e.category+(e.clientName&&e.clientName!=="-"?" - "+e.clientName:""),voucher:"Expense",mode:"Cash",dr:e.amount,cr:0,notes:e.description||""}));
+  rows.sort((a,b)=>a.date.localeCompare(b.date));
+  let bal=0;
+  return rows.map(r=>{bal+=r.cr-r.dr;return{...r,bal};});
+}
+function renderTally(){
+  const ledger=buildLedger();
+  const totalDr=ledger.reduce((s,r)=>s+r.dr,0);
+  const totalCr=ledger.reduce((s,r)=>s+r.cr,0);
+  const vColors={Receipt:{bg:"#0b3d1f",fg:"#34d399"},Payment:{bg:"#3d0b0b",fg:"#f87171"},Expense:{bg:"#2a1b00",fg:"#fb923c"}};
+  const rows=ledger.map(r=>{
+    const vc=vColors[r.voucher]||{bg:"#1e2533",fg:"#94a3b8"};
+    return `<tr><td style="color:#94a3b8">${r.date}</td><td style="font-weight:500">${esc(r.particulars)}</td>
+      <td><span class="badge" style="background:${vc.bg};color:${vc.fg}">${r.voucher}</span></td>
+      <td style="color:#94a3b8">${r.mode}</td>
+      <td style="color:${r.dr?"#ef4444":"#94a3b8"};text-align:right;font-weight:${r.dr?600:400}">${r.dr?INR(r.dr):"-"}</td>
+      <td style="color:${r.cr?"#10b981":"#94a3b8"};text-align:right;font-weight:${r.cr?600:400}">${r.cr?INR(r.cr):"-"}</td>
+      <td style="color:${r.bal>=0?"#10b981":"#ef4444"};text-align:right;font-weight:600">${r.bal>=0?"":"-"}${INR(Math.abs(r.bal))}</td>
+      <td style="color:#94a3b8">${esc(r.notes)}</td></tr>`;
+  }).join('');
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+    <div style="background:#0b1f12;border:1px solid #1a3d24;border-radius:8px;padding:10px 14px;"><div style="color:#6ee7a0;font-size:11px;">Total Credit (Cr)</div><div style="color:#10b981;font-weight:700;font-size:16px;">${INR(totalCr)}</div></div>
+    <div style="background:#1f0b0b;border:1px solid #3d1a1a;border-radius:8px;padding:10px 14px;"><div style="color:#fca5a5;font-size:11px;">Total Debit (Dr)</div><div style="color:#ef4444;font-weight:700;font-size:16px;">${INR(totalDr)}</div></div>
+    <div style="background:#0f1420;border:1px solid #2a3347;border-radius:8px;padding:10px 14px;"><div style="color:#94a3b8;font-size:11px;">Net Balance</div><div style="color:${totalCr-totalDr>=0?"#10b981":"#ef4444"};font-weight:700;font-size:16px;">${INR(Math.abs(totalCr-totalDr))}</div></div>
+  </div>
+  <div class="card" style="overflow:hidden;"><div class="tbl-wrap"><table>
+    <thead><tr>${["Date","Particulars","Voucher","Mode","Debit (Dr)","Credit (Cr)","Balance","Notes"].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows||'<tr class="no-records"><td colspan="8">No entries</td></tr>'}</tbody>
+    <tfoot><tr style="background:#151c2a;border-top:2px solid #2a3347;">
+      <td colspan="4" style="padding:10px 12px;font-weight:700;">TOTAL</td>
+      <td style="padding:10px 12px;color:#ef4444;font-weight:700;text-align:right;">${INR(totalDr)}</td>
+      <td style="padding:10px 12px;color:#10b981;font-weight:700;text-align:right;">${INR(totalCr)}</td>
+      <td style="padding:10px 12px;color:${totalCr-totalDr>=0?"#10b981":"#ef4444"};font-weight:700;text-align:right;">${INR(Math.abs(totalCr-totalDr))}</td>
+      <td></td>
+    </tr></tfoot>
+  </table></div></div>`;
+}
+function renderFinSummary(){
+  const totalIn=DB.payments.filter(p=>p.type==="received").reduce((s,p)=>s+p.amount,0);
+  const totalOut=DB.payments.filter(p=>p.type==="paid").reduce((s,p)=>s+p.amount,0);
+  const totalExp=DB.expenses.reduce((s,e)=>s+e.amount,0);
+  const totalAssets=DB.accounts.reduce((s,a)=>s+a.balance,0);
+  return `<div class="grid-3">
+    <div class="summary-box"><div class="summary-label">Total Received</div><div class="summary-value" style="color:#10b981">${INR(totalIn)}</div></div>
+    <div class="summary-box"><div class="summary-label">Total Paid (Vendor)</div><div class="summary-value" style="color:#ef4444">${INR(totalOut)}</div></div>
+    <div class="summary-box"><div class="summary-label">Total Expenses</div><div class="summary-value" style="color:#f59e0b">${INR(totalExp)}</div></div>
+    <div class="summary-box"><div class="summary-label">Balance to Collect</div><div class="summary-value" style="color:#60a5fa">${INR(DB.clients.reduce((s,c)=>s+(c.totalValue-c.totalReceived),0))}</div></div>
+    <div class="summary-box"><div class="summary-label">Total Bank/Cash Assets</div><div class="summary-value" style="color:#10b981">${INR(totalAssets)}</div></div>
+    <div class="summary-box"><div class="summary-label">Net (Est.)</div><div class="summary-value" style="color:#10b981">${INR(totalIn-totalOut-totalExp)}</div></div>
+  </div>`;
+}
+function renderPayments(){
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:14px;"><button class="btn btn-primary" onclick="openPayAdd()">+ Add Payment</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"date",l:"Date"},{k:"type",l:"Type",r:v=>badge(v)},{k:"party",l:"Party"},{k:"mode",l:"Mode"},
+      {k:"amount",l:"Amount",r:(v,row)=>`<span style="color:${row.type==="received"?"#10b981":"#ef4444"};font-weight:600">${INR(v)}</span>`},
+      {k:"notes",l:"Notes"},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.payments.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openPayEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.payments)}</div>`;
+}
+function payForm(idx){
+  const r=idx===-1?{type:"received",party:"",amount:0,date:today(),notes:"",mode:"Cash"}:DB.payments[idx];
+  return `<div class="grid-2">
+    ${field("Type","f_type","select",r.type,["received","paid"])}${field("Party (Client / Vendor)","f_party","text",r.party)}
+    ${field("Amount (₹)","f_amt","number",r.amount)}${field("Date","f_date","date",r.date)}
+    ${field("Mode","f_mode","select",r.mode,["Cash","UPI","Bank Transfer","Cheque","NEFT","RTGS"])}</div>
+    ${field("Notes","f_notes","text",r.notes)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePay(${idx})">${idx===-1?"Save":"Update"}</button>
+    </div>`;
+}
+function openPayAdd(){showModal("Add Payment",payForm(-1));}
+function openPayEdit(idx){showModal("Edit Payment",payForm(idx));}
+function savePay(idx){
+  const f=getForm(["f_type","f_party","f_amt","f_date","f_mode","f_notes"]);
+  const obj={type:f.f_type,party:f.f_party,amount:+f.f_amt,date:f.f_date,mode:f.f_mode,notes:f.f_notes};
+  if(idx===-1) DB.payments.push({id:Date.now(),...obj});
+  else Object.assign(DB.payments[idx],obj);
+  saveDB();closeModal();renderPage();
+}
+function renderExpenses(){
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:14px;"><button class="btn btn-primary" onclick="openExpAdd()">+ Add Expense</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"date",l:"Date"},{k:"category",l:"Category"},{k:"clientName",l:"Client"},{k:"description",l:"Description"},
+      {k:"amount",l:"Amount",r:v=>`<span style="color:#ef4444;font-weight:600">${INR(v)}</span>`},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.expenses.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openExpEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.expenses)}</div>`;
+}
+function expForm(idx){
+  const r=idx===-1?{category:"Transport",amount:0,description:"",date:today(),clientName:""}:DB.expenses[idx];
+  return `<div class="grid-2">
+    ${field("Category","f_cat","select",r.category,["Transport","Office","Labour","Utilities","Maintenance","Other"])}${field("Amount (₹)","f_amt","number",r.amount)}
+    ${field("Client Name","f_cn","text",r.clientName)}${field("Date","f_date","date",r.date)}</div>
+    ${field("Description","f_desc","text",r.description)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExp(${idx})">${idx===-1?"Save":"Update"}</button>
+    </div>`;
+}
+function openExpAdd(){showModal("Add Expense",expForm(-1));}
+function openExpEdit(idx){showModal("Edit Expense",expForm(idx));}
+function saveExp(idx){
+  const f=getForm(["f_cat","f_amt","f_cn","f_date","f_desc"]);
+  const obj={category:f.f_cat,amount:+f.f_amt,clientName:f.f_cn,date:f.f_date,description:f.f_desc};
+  if(idx===-1) DB.expenses.push({id:Date.now(),...obj});
+  else Object.assign(DB.expenses[idx],obj);
+  saveDB();closeModal();renderPage();
+}
+function renderFinVendors(){
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:14px;"><button class="btn btn-primary" onclick="openVendAdd()">+ Add Vendor</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"name",l:"Vendor"},{k:"phone",l:"Phone"},{k:"category",l:"Category"},
+      {k:"balance",l:"Balance",r:v=>`<span style="color:${v<0?"#ef4444":"#10b981"};font-weight:600">${INR(Math.abs(v))}</span>`},
+      {k:"id",l:"Edit",r:(_,row)=>{const i=DB.vendors.indexOf(row);return`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openVendEdit(${i})">✏️ Edit</button>`;}},
+    ],DB.vendors)}</div>`;
+}
+function vendForm(idx){
+  const r=idx===-1?{name:"",phone:"",category:"Profile",balance:0}:DB.vendors[idx];
+  return `<div class="grid-2">
+    ${field("Vendor Name *","f_name","text",r.name)}${field("Phone","f_phone","tel",r.phone)}
+    ${field("Category","f_cat","select",r.category,["Profile","Hardware","Glass","Powder Coat","Transport","Other"])}${field("Balance Due (₹)","f_bal","number",r.balance)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVend(${idx})">${idx===-1?"Add Vendor":"Update Vendor"}</button>
+    </div>`;
+}
+function openVendAdd(){showModal("Add New Vendor",vendForm(-1));}
+function openVendEdit(idx){showModal("Edit Vendor",vendForm(idx));}
+function saveVend(idx){
+  const f=getForm(["f_name","f_phone","f_cat","f_bal"]);
+  const obj={name:f.f_name,phone:f.f_phone,category:f.f_cat,balance:+f.f_bal};
+  if(idx===-1) DB.vendors.push({id:'v'+Date.now(),...obj});
+  else Object.assign(DB.vendors[idx],obj);
+  saveDB();closeModal();renderPage();
+}
+function printTally(){
+  const rows=buildLedger();
+  const html=`<html><head><title>Tally Ledger</title><style>*{font-family:Arial,sans-serif;font-size:12px}table{width:100%;border-collapse:collapse}th{background:#1a1f2e;color:#fff;padding:7px 10px;text-align:left}td{padding:6px 10px;border-bottom:1px solid #eee}@media print{button{display:none}}</style></head><body>
+  <h2 style="text-align:center">Aluminium CRM — Tally Ledger</h2>
+  <button onclick="window.print()" style="display:block;margin:0 auto 16px;padding:8px 24px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨️ Print</button>
+  <table><thead><tr><th>Date</th><th>Particulars</th><th>Voucher</th><th>Mode</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Notes</th></tr></thead>
+  <tbody>${rows.map(r=>`<tr><td>${r.date}</td><td>${r.particulars}</td><td>${r.voucher}</td><td>${r.mode}</td><td style="color:#dc2626">${r.dr?INR(r.dr):"-"}</td><td style="color:#16a34a">${r.cr?INR(r.cr):"-"}</td><td style="color:${r.bal>=0?"#16a34a":"#dc2626"}">${INR(r.bal)}</td><td>${r.notes}</td></tr>`).join('')}</tbody>
+  </table></body></html>`;
+  const w=window.open("","_blank");w.document.write(html);w.document.close();
+}
+
+// ══════════════════════════════════════════
+// ACCOUNTS (Chart of Accounts)
+// ══════════════════════════════════════════
+function renderAccounts(){
+  const totalAssets=DB.accounts.reduce((s,a)=>s+a.balance,0);
+  return `
+    <div class="page-header"><h1 class="page-title">Chart of Accounts</h1><button class="btn btn-primary" onclick="openAccountAdd()">+ Add Account</button></div>
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="summary-box"><div class="summary-label">Total Bank/Cash</div><div class="summary-value" style="color:#10b981">${INR(DB.accounts.filter(a=>a.type==='bank'||a.type==='cash').reduce((s,a)=>s+a.balance,0))}</div></div>
+      <div class="summary-box"><div class="summary-label">Total Capital</div><div class="summary-value" style="color:#3b82f6">${INR(DB.accounts.filter(a=>a.type==='capital').reduce((s,a)=>s+a.balance,0))}</div></div>
+      <div class="summary-box"><div class="summary-label">Total Assets</div><div class="summary-value">${INR(totalAssets)}</div></div>
+    </div>
+    <div class="card" style="overflow:hidden;">
+      <table>
+        <thead><tr><th>Type</th><th>Account Name</th><th style="text-align:right;">Balance</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${DB.accounts.map((acc,i)=>`
+            <tr>
+              <td><span class="badge" style="background:#1e2533;color:#94a3b8;">${acc.type}</span></td>
+              <td style="font-weight:500;">${esc(acc.name)}</td>
+              <td style="text-align:right;font-weight:600;color:${acc.balance>=0?'#10b981':'#ef4444'}">${INR(acc.balance)}</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="viewAccountLedger('${acc.id}')">📖 Ledger</button>
+                <button class="btn btn-sm btn-danger" onclick="delAccount(${i})">Delete</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+function openAccountAdd(){
+  showModal('Add Account',`
+    ${field('Account Type','f_type','select','bank',ACCOUNT_TYPES.map(t=>t.id))}
+    ${field('Account Name','f_name','text')}
+    ${field('Opening Balance (₹)','f_bal','number','0')}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAccount()">Save</button>
+    </div>`);
+}
+function saveAccount(){
+  const f=getForm(['f_type','f_name','f_bal']);
+  if(!f.f_name){alert('Enter account name');return;}
+  DB.accounts.push({id:'a'+Date.now(),type:f.f_type,name:f.f_name,balance:+f.f_bal});
+  saveDB();closeModal();renderPage();
+}
+function delAccount(i){if(confirm('Delete account?')){DB.accounts.splice(i,1);saveDB();renderPage();}}
+function viewAccountLedger(accId){
+  const acc=DB.accounts.find(a=>a.id===accId);
+  if(!acc)return;
+  const ledger=DB.entries.filter(e=>e.accountId===accId);
+  let bal=0;
+  const rows=ledger.map(e=>{
+    bal+=(e.dc==='credit'?e.amount:-e.amount);
+    return `<tr>
+      <td style="color:#94a3b8">${e.date}</td>
+      <td style="font-weight:500">${esc(e.entityName)}</td>
+      <td><span class="badge" style="background:${e.dc==='credit'?'#0a452a':'#452a2a'};color:${e.dc==='credit'?'#6ee7b7':'#fca5a5'}">${e.dc.toUpperCase()}</span></td>
+      <td style="color:#3b82f6">${esc(e.invoiceNo)}</td>
+      <td style="text-align:right;font-weight:600;color:${e.dc==='debit'?'#ef4444':'#94a3b8'}">${e.dc==='debit'?INR(e.amount):'-'}</td>
+      <td style="text-align:right;font-weight:600;color:${e.dc==='credit'?'#10b981':'#94a3b8'}">${e.dc==='credit'?INR(e.amount):'-'}</td>
+      <td style="text-align:right;font-weight:600;color:${bal>=0?'#10b981':'#ef4444'}">${bal>=0?'':'-'}${INR(Math.abs(bal))}</td>
+    </tr>`;
+  }).join('');
+  showModal(`Ledger: ${acc.name}`,`
+    <div style="margin-bottom:16px;padding:12px;background:#0f1420;border-radius:8px;">
+      <div style="font-size:12px;color:#94a3b8;">Current Balance</div>
+      <div style="font-size:20px;font-weight:700;color:${acc.balance>=0?'#10b981':'#ef4444'}">${INR(acc.balance)}</div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Date</th><th>Entity</th><th>Type</th><th>Invoice</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="text-align:right">Balance</th></tr></thead>
+      <tbody>${rows||'<tr class="no-records"><td colspan="7">No entries</td></tr>'}</tbody>
+    </table></div>`,true);
+}
+
+// ══════════════════════════════════════════
+// JOURNAL ENTRIES
+// ══════════════════════════════════════════
+function renderEntries(){
+  return `
+    <div class="page-header"><h1 class="page-title">Journal Entries</h1><button class="btn btn-primary" onclick="openEntryAdd()">+ New Entry</button></div>
+    <div class="card" style="overflow:hidden;">
+      <table>
+        <thead><tr><th>Date</th><th>Account</th><th>Entity</th><th>Invoice</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${DB.entries.length===0?'<tr class="no-records"><td colspan="7">No entries</td></tr>':DB.entries.map((e,i)=>`
+            <tr>
+              <td style="color:#94a3b8">${e.date}</td>
+              <td style="font-weight:500">${esc(DB.accounts.find(a=>a.id===e.accountId)?.name||'--')}</td>
+              <td style="font-size:12px;color:#94a3b8">${e.type==='client'?'👤':'🏢'} ${esc(e.entityName)}</td>
+              <td style="font-size:12px;color:#3b82f6">${esc(e.invoiceNo||'')}</td>
+              <td style="text-align:right;color:${e.dc==='debit'?'#ef4444':'#94a3b8'};font-weight:${e.dc==='debit'?600:400}">${e.dc==='debit'?INR(e.amount):'-'}</td>
+              <td style="text-align:right;color:${e.dc==='credit'?'#10b981':'#94a3b8'};font-weight:${e.dc==='credit'?600:400}">${e.dc==='credit'?INR(e.amount):'-'}</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="openEntryEdit(${i})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="delEntry(${i})">Delete</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+function openEntryAdd(){
+  const accOpts=DB.accounts.map(a=>a.name);
+  const clientOpts=DB.clients.map(c=>c.clientName||c.name);
+  const vendorOpts=DB.vendors.map(v=>v.name);
+  showModal('New Journal Entry',`
+    ${field('Date','f_date','date',today())}
+    ${field('Entry Type','f_etype','select','Client Entry',['Client Entry','Vendor Entry'])}
+    <div id="entity-field">${field('Client','f_entity','select',clientOpts[0]||'',clientOpts)}</div>
+    ${field('Debit/Credit','f_dc','select','Debit',['Debit','Credit'])}
+    ${field('Amount (₹)','f_amt','number','0')}
+    ${field('Account','f_acc','select',accOpts[0]||'',accOpts)}
+    ${field('Invoice No','f_inv','text')}
+    ${field('Notes','f_notes','textarea')}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry(-1)">Save Entry</button>
+    </div>`);
+  setTimeout(function(){
+    const typeEl=document.getElementById('f_etype');
+    if(typeEl){
+      typeEl.addEventListener('change',function(){
+        const ef=document.getElementById('entity-field');
+        if(!ef) return;
+        if(this.value==='Client Entry') ef.innerHTML=field('Client','f_entity','select',clientOpts[0]||'',clientOpts);
+        else ef.innerHTML=field('Vendor','f_entity','select',vendorOpts[0]||'',vendorOpts);
+      });
+    }
+  },50);
+}
+function openEntryEdit(i){
+  const e=DB.entries[i];
+  showModal('Edit Entry',`
+    ${field('Date','f_date','date',e.date)}
+    ${field('Amount (₹)','f_amt','number',e.amount)}
+    ${field('Invoice No','f_inv','text',e.invoiceNo||'')}
+    ${field('Notes','f_notes','textarea',e.notes||'')}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="updateEntry(${i})">Update</button>
+    </div>`);
+}
+function saveEntry(idx){
+  const f=getForm(['f_date','f_etype','f_entity','f_dc','f_amt','f_acc','f_inv','f_notes']);
+  const isClient=f.f_etype==='Client Entry';
+  const entityList=isClient?DB.clients:DB.vendors;
+  const entity=entityList.find(x=>(x.clientName||x.name)===f.f_entity);
+  const acc=DB.accounts.find(a=>a.name===f.f_acc);
+  const amount=+f.f_amt;
+  if(!entity||!acc){alert('Select valid entity and account');return;}
+  const dc=f.f_dc.toLowerCase();
+  DB.entries.push({
+    id:Date.now(),date:f.f_date,accountId:acc.id,
+    type:isClient?'client':'vendor',
+    entityId:entity.id,entityName:entity.clientName||entity.name,
+    dc,amount,invoiceNo:f.f_inv,notes:f.f_notes
+  });
+  // Update account balance
+  acc.balance+=(dc==='credit'?amount:-amount);
+  saveDB();closeModal();renderPage();
+}
+function updateEntry(i){
+  const f=getForm(['f_date','f_amt','f_inv','f_notes']);
+  Object.assign(DB.entries[i],{date:f.f_date,amount:+f.f_amt,invoiceNo:f.f_inv,notes:f.f_notes});
+  saveDB();closeModal();renderPage();
+}
+function delEntry(i){
+  if(confirm('Delete this entry?')){
+    const e=DB.entries[i];
+    const a=DB.accounts.find(x=>x.id===e.accountId);
+    if(a) a.balance-=(e.dc==='credit'?e.amount:-e.amount);
+    DB.entries.splice(i,1);
+    saveDB();renderPage();
+  }
+}
+
+// ══════════════════════════════════════════
+// SCHEDULE
+// ══════════════════════════════════════════
+let _schedView="monthly";
+let _schedYear=new Date().getFullYear();
+let _schedMonth=new Date().getMonth();
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function renderSchedule(){
+  const viewBtns=["monthly","weekly","list"].map(v=>`<button class="filter-tab${_schedView===v?' active':''}" onclick="setSchedView('${v}')">${v.charAt(0).toUpperCase()+v.slice(1)}</button>`).join('');
+  const meetings=DB.meetings||[];
+  const monthMtgs=meetings.filter(m=>m.date.startsWith(`${_schedYear}-${String(_schedMonth+1).padStart(2,"0")}`));
+  let calHtml='';
+  if(_schedView==="monthly") calHtml=renderCalMonthly(meetings);
+  else if(_schedView==="weekly") calHtml=renderCalWeekly(meetings);
+  else calHtml=renderCalList(monthMtgs);
+  return `
+    <div class="page-header"><h1 class="page-title">📅 Schedule</h1><button class="btn btn-primary" onclick="openMtgAdd()">+ Add Meeting</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;gap:6px;">${viewBtns}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="btn btn-secondary" onclick="schedPrev()">‹</button>
+        <span style="font-weight:600;min-width:140px;text-align:center;">${MONTHS[_schedMonth]} ${_schedYear}</span>
+        <button class="btn btn-secondary" onclick="schedNext()">›</button>
+      </div>
+    </div>
+    <div class="grid-4" style="margin-bottom:16px;">
+      <div class="summary-box"><div class="summary-label">Total Meetings</div><div class="summary-value" style="color:#60a5fa">${monthMtgs.length}</div></div>
+      <div class="summary-box"><div class="summary-label">Pending</div><div class="summary-value" style="color:#f59e0b">${monthMtgs.filter(m=>m.status==="Pending").length}</div></div>
+      <div class="summary-box"><div class="summary-label">Done</div><div class="summary-value" style="color:#10b981">${monthMtgs.filter(m=>m.status==="Done").length}</div></div>
+      <div class="summary-box"><div class="summary-label">Cancelled</div><div class="summary-value" style="color:#ef4444">${monthMtgs.filter(m=>m.status==="Cancelled").length}</div></div>
+    </div>
+    ${calHtml}`;
+}
+function setSchedView(v){_schedView=v;renderPage();}
+function schedPrev(){if(_schedMonth===0){_schedMonth=11;_schedYear--;}else _schedMonth--;renderPage();}
+function schedNext(){if(_schedMonth===11){_schedMonth=0;_schedYear++;}else _schedMonth++;renderPage();}
+function renderCalMonthly(meetings){
+  const year=_schedYear,month=_schedMonth;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const firstDay=new Date(year,month,1).getDay();
+  const todayStr=today();
+  let cells='';
+  for(let i=0;i<firstDay;i++) cells+=`<div class="cal-cell" style="background:#0d1220;"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const dm=meetings.filter(m=>m.date===ds);
+    const isToday=ds===todayStr;
+    const evts=dm.slice(0,2).map(m=>`<div class="cal-event" style="background:${MTG_COLORS[m.type]||"#3b82f6"};opacity:${m.status==="Done"?0.6:1}" onclick="event.stopPropagation();openMtgEdit(${DB.meetings.indexOf(m)})">${m.time} ${esc(m.title)}</div>`).join('');
+    const more=dm.length>2?`<div style="font-size:9px;color:#94a3b8">+${dm.length-2} more</div>`:'';
+    cells+=`<div class="cal-cell${isToday?" today":""}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:${isToday?700:400};color:${isToday?"#fff":"#e2e8f0"};background:${isToday?"#3b82f6":"none"};width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;">${d}</span>
+        ${dm.length?`<span style="font-size:10px;background:#3b82f6;color:#fff;border-radius:10px;padding:1px 6px;">${dm.length}</span>`:''}
+      </div>${evts}${more}
+    </div>`;
+  }
+  return `<div class="card" style="overflow:hidden;">
+    <div class="cal-grid" style="border-bottom:1px solid #2a3347;">${DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>
+  </div>`;
+}
+function renderCalWeekly(meetings){
+  const now=new Date(_schedYear,_schedMonth,1);
+  const day=now.getDay();now.setDate(now.getDate()-day);
+  const weekDates=[];
+  for(let i=0;i<7;i++){const dd=new Date(now);dd.setDate(now.getDate()+i);weekDates.push(dd);}
+  const todayStr=today();
+  const headers=weekDates.map((d,i)=>{
+    const ds=d.toISOString().split("T")[0];
+    const isToday=ds===todayStr;
+    return `<div style="padding:10px 8px;text-align:center;background:${isToday?"#0e1e35":"#151c2a"};border-right:${i<6?"1px solid #2a3347":"none"}">
+      <div style="color:#94a3b8;font-size:11px;font-weight:500;">${DAYS[d.getDay()]}</div>
+      <div style="color:${isToday?"#3b82f6":"#e2e8f0"};font-weight:700;font-size:16px;">${d.getDate()}</div>
+    </div>`;
+  }).join('');
+  const cols=weekDates.map((d,i)=>{
+    const ds=d.toISOString().split("T")[0];
+    const dm=meetings.filter(m=>m.date===ds).sort((a,b)=>a.time.localeCompare(b.time));
+    const isToday=ds===todayStr;
+    const evts=dm.map(m=>`<div style="background:${MTG_COLORS[m.type]||"#3b82f6"};color:#fff;border-radius:6px;padding:5px 7px;margin-bottom:5px;font-size:11px;cursor:pointer;opacity:${m.status==="Done"?0.6:1}" onclick="openMtgEdit(${DB.meetings.indexOf(m)})">
+      <div style="font-weight:700;margin-bottom:2px;">${m.time}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.title)}</div>
+    </div>`).join('');
+    return `<div style="border-right:${i<6?"1px solid #2a3347":"none"};padding:6px;background:${isToday?"#0c1a2e":"transparent"};min-height:200px;">${evts||'<div style="color:#2a3347;font-size:10px;text-align:center;margin-top:20px;">—</div>'}</div>`;
+  }).join('');
+  return `<div class="card" style="overflow:hidden;">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #2a3347;">${headers}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);">${cols}</div>
+  </div>`;
+}
+function renderCalList(monthMtgs){
+  return `<div class="card" style="overflow:hidden;">${tbl([
+    {k:"date",l:"Date"},{k:"time",l:"Time"},
+    {k:"title",l:"Title",r:v=>`<span style="font-weight:600">${esc(v)}</span>`},
+    {k:"type",l:"Type",r:v=>`<span style="background:${MTG_COLORS[v]||"#333"};color:#fff;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;">${v}</span>`},
+    {k:"client",l:"Client"},{k:"location",l:"Location"},
+    {k:"status",l:"Status",r:v=>badge(v==="Done"?"Won":v==="Cancelled"?"Loss":"Pending")},
+    {k:"id",l:"Actions",r:(_,row)=>{const i=DB.meetings.indexOf(row);return`<div style="display:flex;gap:5px;"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openMtgEdit(${i})">✏️</button><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMtg(${i})">🗑️</button></div>`;}},
+  ],[...monthMtgs].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)))}</div>`;
+}
+function mtgForm(idx){
+  const r=idx===-1?{title:"",date:today(),time:"09:00",type:"Meeting",client:"",location:"",notes:"",status:"Pending"}:DB.meetings[idx];
+  return `<div class="grid-2">
+    ${field("Title *","f_title","text",r.title)}${field("Date *","f_date","date",r.date)}
+    ${field("Time","f_time","time",r.time)}${field("Type","f_type","select",r.type,MTG_TYPES)}
+    ${field("Client / Party","f_client","text",r.client)}${field("Location","f_loc","text",r.location)}
+    ${field("Status","f_st","select",r.status,["Pending","Done","Cancelled"])}</div>
+    ${field("Notes","f_notes","textarea",r.notes)}
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      ${idx!==-1?`<button class="btn btn-danger" onclick="deleteMtg(${idx});closeModal()">Delete</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMtg(${idx})">${idx===-1?"Save Meeting":"Update"}</button>
+    </div>`;
+}
+function openMtgAdd(){showModal("Add Meeting",mtgForm(-1));}
+function openMtgEdit(idx){showModal("Edit Meeting",mtgForm(idx));}
+function deleteMtg(idx){if(confirm("Delete this meeting?"))DB.meetings.splice(idx,1);saveDB();closeModal();renderPage();}
+function saveMtg(idx){
+  const f=getForm(["f_title","f_date","f_time","f_type","f_client","f_loc","f_st","f_notes"]);
+  if(!f.f_title||!f.f_date){alert("Title and Date required");return;}
+  const obj={title:f.f_title,date:f.f_date,time:f.f_time,type:f.f_type,client:f.f_client,location:f.f_loc,status:f.f_st,notes:f.f_notes};
+  if(idx===-1) DB.meetings.push({id:Date.now(),...obj});
+  else Object.assign(DB.meetings[idx],obj);
+  saveDB();closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// AI ASSISTANT
+// ══════════════════════════════════════════
+let _chatMsgs=[{role:"assistant",content:"வணக்கம்! நான் உங்கள் Aluminium CRM AI Assistant. Leads, Quotes, Clients, Finance எல்லாம் கேளுங்கள்! 🏗️"}];
+let _chatLoading=false;
+function renderAI(){
+  const msgs=_chatMsgs.map(m=>`<div class="msg-${m.role==="user"?"user":"ai"}">${esc(m.content)}</div>`).join('');
+  const loading=_chatLoading?`<div class="msg-ai">Thinking...</div>`:'';
+  const quick=["இந்த மாதம் revenue என்ன?","Pending balance எவ்வளவு?","எந்த client status Production?","Recent quotes list kudu"];
+  const qbtns=quick.map(q=>`<button class="quick-btn" onclick="setChat('${q}')">${q}</button>`).join('');
+  return `<h1 class="page-title" style="margin-bottom:14px;">AI Assistant</h1>
+    <div class="quick-btns">${qbtns}</div>
+    <div id="chat-wrap">
+      <div id="chat-messages">${msgs}${loading}<div id="chat-end"></div></div>
+      <div id="chat-input-row">
+        <input id="chat-input" placeholder="Ask anything... (Tamil or English)" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="btn btn-primary" onclick="sendChat()" style="padding:11px 22px;">Send</button>
+      </div>
+    </div>`;
+}
+function setChat(txt){const el=document.getElementById('chat-input');if(el)el.value=txt;}
+async function sendChat(){
+  const el=document.getElementById('chat-input');
+  if(!el||!el.value.trim()||_chatLoading)return;
+  const inp=el.value.trim();el.value='';
+  _chatMsgs.push({role:"user",content:inp});
+  _chatLoading=true;renderPage();
+  document.getElementById('chat-end')?.scrollIntoView({behavior:"smooth"});
+  const sys=`You are an AI assistant for Aluminium CRM. Answer in the same language as the user (Tamil or English). Be concise.
+DATA:
+Leads(${DB.leads.length}): ${JSON.stringify(DB.leads.map(l=>({name:l.clientName,project:l.projectName,status:l.status})))}
+Quotes(${DB.quotes.length}): ${JSON.stringify(DB.quotes.map(q=>({no:q.quoteNo,client:q.clientName,total:q.totalValue,status:q.status})))}
+Clients(${DB.clients.length}): ${JSON.stringify(DB.clients.map(c=>({name:c.clientName,value:c.totalValue,received:c.totalReceived,balance:c.totalValue-c.totalReceived,status:c.status})))}
+Finance: Received=₹${DB.payments.filter(p=>p.type==="received").reduce((s,p)=>s+p.amount,0).toLocaleString("en-IN")}, Expenses=₹${DB.expenses.reduce((s,e)=>s+e.amount,0).toLocaleString("en-IN")}`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:_chatMsgs.map(m=>({role:m.role,content:m.content}))})});
+    const d=await res.json();
+    const reply=d.content?.map(c=>c.text).join("")||"Error. Try again.";
+    _chatMsgs.push({role:"assistant",content:reply});
+  }catch(e){_chatMsgs.push({role:"assistant",content:"API connection error."});}
+  _chatLoading=false;renderPage();
+  document.getElementById('chat-end')?.scrollIntoView({behavior:"smooth"});
+}
+
+// ══════════════════════════════════════════
+// USER MANAGEMENT
+// ══════════════════════════════════════════
+function renderUsers(){
+  return `<div class="page-header"><h1 class="page-title">User Management</h1><button class="btn btn-primary" onclick="openUserAdd()">+ Add User</button></div>
+    <div class="card" style="overflow:hidden;">${tbl([
+      {k:"name",l:"Name"},{k:"email",l:"Email"},{k:"role",l:"Role"},
+      {k:"active",l:"Status",r:v=>`<span class="badge" style="background:${v?'#064e3b':'#450a0a'};color:${v?'#34d399':'#f87171'}">${v?'Active':'Inactive'}</span>`},
+      {k:"id",l:"Actions",r:(_,row)=>{const i=DB.users.indexOf(row);return`<div style="display:flex;gap:7px;"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openUserEdit(${i})">✏️ Edit</button><button class="btn btn-sm ${row.active?"btn-danger":"btn-success"}" onclick="event.stopPropagation();toggleUser(${i})">${row.active?"Disable":"Enable"}</button></div>`;}},
+    ],DB.users)}</div>`;
+}
+function userForm(idx){
+  const r=idx===-1?{name:"",email:"",role:"Sales"}:DB.users[idx];
+  return `<div class="grid-2">
+    ${field("Full Name *","f_name","text",r.name)}${field("Email *","f_email","email",r.email)}
+    ${field("Role","f_role","select",r.role,["Administrator","Sales","Production","Finance","Viewer"])}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser(${idx})">${idx===-1?"Add User":"Update"}</button>
+    </div>`;
+}
+function openUserAdd(){showModal("Add User",userForm(-1));}
+function openUserEdit(idx){showModal("Edit User",userForm(idx));}
+function toggleUser(idx){DB.users[idx].active=!DB.users[idx].active;renderPage();}
+function saveUser(idx){
+  const f=getForm(["f_name","f_email","f_role"]);
+  if(!f.f_name||!f.f_email){alert("Fill required fields");return;}
+  const obj={name:f.f_name,email:f.f_email,role:f.f_role};
+  if(idx===-1) DB.users.push({id:Date.now(),active:true,...obj});
+  else Object.assign(DB.users[idx],obj);
+  closeModal();renderPage();
+}
+
+// ══════════════════════════════════════════
+// RENDER PAGE
+// ══════════════════════════════════════════
+function renderPage(){
+  try{
+    const content=document.getElementById('content');
+    if(!content) return;
+    const pages={
+      dashboard:renderDashboard,leads:renderLeads,measurements:renderMeasurements,
+      quotes:renderQuotes,orders:renderOrders,clients:renderClients,
+      purchase:renderPurchase,production:renderProduction,delivery:renderDelivery,
+      erection:renderErection,finance:renderFinance,accounts:renderAccounts,
+      entries:renderEntries,schedule:renderSchedule,ai:renderAI,users:renderUsers,
+    };
+    content.innerHTML=(pages[currentPage]||renderDashboard)();
+  }catch(err){console.error('Render error:',err);}
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',async function(){
+  const sess=localStorage.getItem('crm_session')||sessionStorage.getItem('crm_session');
+  if(sess){
+    try{
+      currentUser=JSON.parse(sess);
+      await loadDB();
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='flex';
+      document.getElementById('user-avatar').textContent=currentUser.name.charAt(0).toUpperCase();
+      document.getElementById('user-name').textContent=currentUser.name;
+      document.getElementById('user-role').textContent=currentUser.role;
+      buildNav();renderPage();
+    }catch(e){currentUser=null;}
+  }
+});
+</script>
+</body>
+</html>
